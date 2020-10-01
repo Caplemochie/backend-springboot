@@ -48,21 +48,25 @@ public class PriorityController {
 
 
 
-        return ResponseEntity.ok(priorityRepository.save(priority));
+        return ResponseEntity.ok(priorityRepository.save(priority)); // save работает как на добавление, так и на обновление
     }
 
     @PutMapping("/update")
     public ResponseEntity<Priority> update(@RequestBody Priority priority) {
 
         // проверка на обязательные параметры
-        if (priority.getId() == null) {
-            // id создается автоматически в БД (autoincrement), поэтому его передавать не нужно, иначе может быть конфликт уникальности значения
+        if (priority.getId() == null || priority.getId() == 0) {
             return new ResponseEntity("missed param: id", HttpStatus.NOT_ACCEPTABLE);
         }
 
         // если передали пустое значение title
         if (priority.getTitle() == null || priority.getTitle().trim().length() == 0) {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        // если передали пустое значение color
+        if (priority.getColor() == null || priority.getColor().trim().length() == 0) {
+            return new ResponseEntity("missed param: color", HttpStatus.NOT_ACCEPTABLE);
         }
 
 
