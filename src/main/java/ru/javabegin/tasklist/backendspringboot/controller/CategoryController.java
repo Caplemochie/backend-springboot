@@ -1,5 +1,7 @@
 package ru.javabegin.tasklist.backendspringboot.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.javabegin.tasklist.backendspringboot.entity.Category;
 import ru.javabegin.tasklist.backendspringboot.repo.CategoryRepository;
@@ -31,8 +33,20 @@ public class CategoryController {
     }
 
     @PostMapping("/add")
-    public Category add(@RequestBody Category category) {
-        return categoryRepository.save(category);
+    public ResponseEntity<Category> add(@RequestBody Category category) {
+
+        // проверка на обязательные параметры
+        if (category.getId() != null && category.getId() != 0) {
+            // id создается автоматически в БД (autoincrement), поэтому его передавать не нужно, иначе может быть конфликт уникальности значения
+            return new ResponseEntity("returned param: id MUST be null", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        // если передали пустое значение title
+        if (category.getTitle() == null || category.getTitle().trim().length() == 0) {
+            return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        return ResponseEntity.ok(categoryRepository.save(category));
     }
 
 }

@@ -42,7 +42,7 @@ public class PriorityController {
         }
 
         // если передали пустое значение title
-        if (priority.getTitle() == null && priority.getTitle().trim().length() == 0) {
+        if (priority.getTitle() == null || priority.getTitle().trim().length() == 0) {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
         }
 
@@ -50,4 +50,26 @@ public class PriorityController {
 
         return ResponseEntity.ok(priorityRepository.save(priority));
     }
+
+    @PutMapping("/update")
+    public ResponseEntity<Priority> update(@RequestBody Priority priority) {
+
+        // проверка на обязательные параметры
+        if (priority.getId() == null) {
+            // id создается автоматически в БД (autoincrement), поэтому его передавать не нужно, иначе может быть конфликт уникальности значения
+            return new ResponseEntity("missed param: id", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        // если передали пустое значение title
+        if (priority.getTitle() == null || priority.getTitle().trim().length() == 0) {
+            return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+
+
+        return ResponseEntity.ok(priorityRepository.save(priority));
+    }
+
+
+
 }
