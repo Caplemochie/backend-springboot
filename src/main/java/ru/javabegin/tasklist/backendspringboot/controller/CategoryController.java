@@ -1,5 +1,6 @@
 package ru.javabegin.tasklist.backendspringboot.controller;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,6 +9,7 @@ import ru.javabegin.tasklist.backendspringboot.entity.Priority;
 import ru.javabegin.tasklist.backendspringboot.repo.CategoryRepository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Created by tagir on 30.09.2020.
@@ -69,4 +71,36 @@ public class CategoryController {
         // save работает как на добавление, так и на обновление
         return ResponseEntity.ok(categoryRepository.save(category));
     }
+
+
+    @GetMapping("/id/{id}")
+    public ResponseEntity<Category> findById(@PathVariable Long id) {
+
+        Category category = null;
+
+        try{
+            category = categoryRepository.findById(id).get();
+        }catch (NoSuchElementException e) {
+            e.printStackTrace();
+            return new ResponseEntity("id=" +id+" not found", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+
+        return ResponseEntity.ok(categoryRepository.findById(id).get());
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity delete(@PathVariable Long id) {
+
+
+        try{
+          categoryRepository.deleteById(id);
+        }catch (EmptyResultDataAccessException e) {   // если объект не будет найден
+            e.printStackTrace();
+            return new ResponseEntity("id=" +id+" not found", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        return new ResponseEntity(HttpStatus.OK); // не возвращаем удаленный объект
+    }
+
 }
