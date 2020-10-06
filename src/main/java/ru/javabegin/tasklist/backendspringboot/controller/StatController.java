@@ -8,6 +8,7 @@ import ru.javabegin.tasklist.backendspringboot.entity.Priority;
 import ru.javabegin.tasklist.backendspringboot.entity.Stat;
 import ru.javabegin.tasklist.backendspringboot.repo.PriorityRepository;
 import ru.javabegin.tasklist.backendspringboot.repo.StatRepository;
+import ru.javabegin.tasklist.backendspringboot.util.MyLogger;
 
 import java.util.List;
 
@@ -30,8 +31,16 @@ public class StatController {
     @GetMapping("/stat")
     public ResponseEntity<Stat> findById() {
 
+        MyLogger.showMethodName("StatController: findById() --------------------------------------------------------------");
+
         // можно не использовать ResponseEntity, а просто вернуть коллекцию, код все равно будет 200 ОК
         return ResponseEntity.ok(statRepository.findById(defaultId).get());
+    }
+
+    public static void showMethodName(String name) {
+        System.out.println();
+        System.out.println();
+        System.out.println(name);
     }
 }
 

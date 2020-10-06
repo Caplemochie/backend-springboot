@@ -1,15 +1,13 @@
 package ru.javabegin.tasklist.backendspringboot.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.javabegin.tasklist.backendspringboot.entity.Category;
 import ru.javabegin.tasklist.backendspringboot.entity.Priority;
 import ru.javabegin.tasklist.backendspringboot.repo.PriorityRepository;
-import ru.javabegin.tasklist.backendspringboot.search.CategorySearchValues;
 import ru.javabegin.tasklist.backendspringboot.search.PrioritySearchValues;
+import ru.javabegin.tasklist.backendspringboot.util.MyLogger;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -29,12 +27,16 @@ public class PriorityController {
 
     @GetMapping("/all")
     public List<Priority> findAll() {
+        MyLogger.showMethodName("PriorityController: findAll() --------------------------------------------------------------");
 
         return priorityRepository.findAllByOrderByIdAsc();
     }
 
     @PostMapping("/add")
     public ResponseEntity<Priority> add(@RequestBody Priority priority) {
+
+        MyLogger.showMethodName("PriorityController: add() --------------------------------------------------------------");
+
 
         // проверка на обязательные параметры
         if (priority.getId() != null && priority.getId() != 0) {
@@ -59,6 +61,8 @@ public class PriorityController {
     @PutMapping("/update")
     public ResponseEntity<Priority> update(@RequestBody Priority priority) {
 
+        MyLogger.showMethodName("PriorityController: update() --------------------------------------------------------------");
+
         // проверка на обязательные параметры
         if (priority.getId() == null || priority.getId() == 0) {
             return new ResponseEntity("missed param: id", HttpStatus.NOT_ACCEPTABLE);
@@ -82,6 +86,8 @@ public class PriorityController {
     @GetMapping("/id/{id}")
     public ResponseEntity<Priority> findById(@PathVariable Long id) {
 
+        MyLogger.showMethodName("PriorityController: findById() --------------------------------------------------------------");
+
         Priority priority = null;
 
         try{
@@ -98,6 +104,7 @@ public class PriorityController {
     @DeleteMapping("/delete/{id}")
     public ResponseEntity delete(@PathVariable Long id) {
 
+        MyLogger.showMethodName("PriorityController: delete() --------------------------------------------------------------");
 
         try{
             priorityRepository.deleteById(id);
@@ -112,6 +119,8 @@ public class PriorityController {
     // поиск по любым параметрам PrioritySearchValues
     @PostMapping("/search")
     public ResponseEntity<List<Priority>> search(@RequestBody PrioritySearchValues prioritySearchValues) {
+
+        MyLogger.showMethodName("PriorityController: search() --------------------------------------------------------------");
 
         // если вместо текста будет пусто или null - вернутся все категории
         return ResponseEntity.ok(priorityRepository.findByTitle(prioritySearchValues.getText()));

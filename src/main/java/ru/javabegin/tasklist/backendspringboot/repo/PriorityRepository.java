@@ -18,8 +18,8 @@ import java.util.List;
 public interface PriorityRepository extends JpaRepository<Priority, Long> {
 
 
-    // если title = null или =='', то получим всезначения
-    @Query("SELECT c FROM Priority c where " +
+    // если title = null или =='', то получим все значения
+    @Query("SELECT c FROM Priority c WHERE " +
             "(:title is null or :title='' lower(c.title) like lower(concat('%', :title,'%')))   " +
             "order by c.title asc")
     List<Priority> findByTitle(@Param("title") String title);
