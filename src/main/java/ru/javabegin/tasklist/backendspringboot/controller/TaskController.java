@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.javabegin.tasklist.backendspringboot.entity.Task;
 import ru.javabegin.tasklist.backendspringboot.repo.TaskRepository;
+import ru.javabegin.tasklist.backendspringboot.search.TaskSearchValues;
 import ru.javabegin.tasklist.backendspringboot.util.MyLogger;
 
 import java.util.List;
@@ -111,7 +112,32 @@ public class TaskController {
 
         return new ResponseEntity(HttpStatus.OK); // не возвращаем удаленный объект
     }
+    // поиск по любым параметрам
+    // TaskSearchValues содержит все возможные параметры поиска
 
+    @PostMapping("/search")
+    public ResponseEntity<List<Task>> search(@RequestBody TaskSearchValues taskSearchValues) {
+
+        MyLogger.showMethodName("task: search() ---------------------------------------------------------------- ");
+
+
+        // имитация загрузки (для тестирования индикаторов загрузки)
+//        imitateLoading();
+
+        // исключить NullPointerException
+        String text = taskSearchValues.getTitle() != null ? taskSearchValues.getTitle() : null;
+
+        // конвертируем Boolean в Integer
+        Integer completed = taskSearchValues.getCompletedId() != null ?  taskSearchValues.getCompletedId() : null;
+
+        Long priorityId = taskSearchValues.getPriorityId() != null ? taskSearchValues.getPriorityId() : null;
+        Long categoryId = taskSearchValues.getCategoryId() != null ? taskSearchValues.getCategoryId() : null;
+
+
+        // результат запроса
+        return ResponseEntity.ok(taskRepository.findByParams(text, completed, priorityId, categoryId));
+
+    }
 
 
 }
