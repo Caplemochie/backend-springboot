@@ -4,11 +4,9 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.javabegin.tasklist.backendspringboot.BackendSpringbootApplication;
 import ru.javabegin.tasklist.backendspringboot.entity.Category;
-import ru.javabegin.tasklist.backendspringboot.entity.Priority;
-import ru.javabegin.tasklist.backendspringboot.repo.CategoryRepository;
 import ru.javabegin.tasklist.backendspringboot.search.CategorySearchValues;
+import ru.javabegin.tasklist.backendspringboot.service.CategoryService;
 import ru.javabegin.tasklist.backendspringboot.util.MyLogger;
 
 import java.util.List;
@@ -18,33 +16,45 @@ import java.util.NoSuchElementException;
  * Created by tagir on 30.09.2020.
  */
 
+// Если возникнет exception - клиенту вернется код  500 Internal Server Error, поэтому не нужно все действия оборачивать в try-catch
+
+// используем @RestController вместо обычного @Controller, чтобы все ответы сразу оборачивались в JSON
+// иначе пришлось бы выполнять лишнюю работу, использовать @ResponseBody для ответа, указывать тип отправки JSON
+
+// Названия методов могут быть любыми, главное не дублировать их имена и URL mapping
 @RestController
-@RequestMapping("/category")
+@RequestMapping ("/category") // базовый адрес
 public class CategoryController {
 
+    // доступ к данным из БД
+    private CategoryService categoryService;
 
-    public CategoryController(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    // автоматическое внедрение экземпляра класса через конструктор
+    // не используем @Autowired ля переменной класса, т.к. "Field injection is not recommended "
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
-    private CategoryRepository categoryRepository;
 
     @GetMapping("/all")
     public List<Category> findAll() {
 
-        MyLogger.showMethodName("CategoryController: findAll() --------------------------------------------------------------");
-        return categoryRepository.findAllByOrderByTitleAsc();
+        MyLogger.showMethodName("CategoryController: findAll() ---------------------------------------------------------- ");
+        return categoryService.findAllByOrderByTitleAsc();
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<Category> add(@RequestBody Category category) {
 
-        MyLogger.showMethodName("CategoryController: add() ------------------------------------------------------------------");
+    @PostMapping("/add")
+    public ResponseEntity<Category> add(@RequestBody Category category){
+
+
+        MyLogger.showMethodName("CategoryController: add() ---------------------------------------------------------- ");
+
 
         // проверка на обязательные параметры
         if (category.getId() != null && category.getId() != 0) {
             // id создается автоматически в БД (autoincrement), поэтому его передавать не нужно, иначе может быть конфликт уникальности значения
-            return new ResponseEntity("returned param: id MUST be null", HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity("redundant param: id MUST be null", HttpStatus.NOT_ACCEPTABLE);
         }
 
         // если передали пустое значение title
@@ -52,14 +62,15 @@ public class CategoryController {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
         }
 
-        return ResponseEntity.ok(categoryRepository.save(category));
+
+        return ResponseEntity.ok(categoryService.add(category));
     }
-    
+
     @PutMapping("/update")
-    public ResponseEntity<Category> update(@RequestBody Category category) {
+    public ResponseEntity update(@RequestBody Category category){
 
+        MyLogger.showMethodName("CategoryController: update() ---------------------------------------------------------- ");
 
-        MyLogger.showMethodName("CategoryController: update() ------------------------------------------------------------------");
 
         // проверка на обязательные параметры
         if (category.getId() == null || category.getId() == 0) {
@@ -71,58 +82,65 @@ public class CategoryController {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
         }
 
-
-
-
         // save работает как на добавление, так и на обновление
-        return ResponseEntity.ok(categoryRepository.save(category));
+        categoryService.update(category);
+
+        return new ResponseEntity(HttpStatus.OK); // просто отправляем статус 200 (операция прошла успешно)
     }
 
-
+    // параметр id передаются не в BODY запроса, а в самом URL
     @GetMapping("/id/{id}")
     public ResponseEntity<Category> findById(@PathVariable Long id) {
 
+        MyLogger.showMethodName("CategoryController: findById() ---------------------------------------------------------- ");
 
-        MyLogger.showMethodName("CategoryController: findById() -------------------------------------------------------------");
 
         Category category = null;
 
+        // можно обойтись и без try-catch, тогда будет возвращаться полная ошибка (stacktrace)
+        // здесь показан пример, как можно обрабатывать исключение и отправлять свой текст/статус
         try{
-            category = categoryRepository.findById(id).get();
-        }catch (NoSuchElementException e) {
+            category = categoryService.findById(id);
+        }catch (NoSuchElementException e){ // если объект не будет найден
             e.printStackTrace();
-            return new ResponseEntity("id=" +id+" not found", HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity("id="+id+" not found", HttpStatus.NOT_ACCEPTABLE);
         }
 
-
-        return ResponseEntity.ok(categoryRepository.findById(id).get());
+        return  ResponseEntity.ok(category);
     }
 
+
+    // параметр id передаются не в BODY запроса, а в самом URL
     @DeleteMapping("/delete/{id}")
     public ResponseEntity delete(@PathVariable Long id) {
 
+        MyLogger.showMethodName("CategoryController: delete() ---------------------------------------------------------- ");
 
-        MyLogger.showMethodName("CategoryController: delete() ---------------------------------------------------------------");
 
-        try{
-          categoryRepository.deleteById(id);
-        }catch (EmptyResultDataAccessException e) {   // если объект не будет найден
+        // можно обойтись и без try-catch, тогда будет возвращаться полная ошибка (stacktrace)
+        // здесь показан пример, как можно обрабатывать исключение и отправлять свой текст/статус
+        try {
+            categoryService.deleteById(id);
+        }catch (EmptyResultDataAccessException e){
             e.printStackTrace();
-            return new ResponseEntity("id=" +id+" not found", HttpStatus.NOT_ACCEPTABLE);
+            return new ResponseEntity("id="+id+" not found", HttpStatus.NOT_ACCEPTABLE);
         }
 
-        return new ResponseEntity(HttpStatus.OK); // не возвращаем удаленный объект
+        return new ResponseEntity(HttpStatus.OK); // просто отправляем статус 200 (операция прошла успешно)
     }
 
     // поиск по любым параметрам CategorySearchValues
     @PostMapping("/search")
-    public ResponseEntity<List<Category>> search(@RequestBody CategorySearchValues categorySearchValues) {
+    public ResponseEntity<List<Category>> search(@RequestBody CategorySearchValues categorySearchValues){
 
-       MyLogger.showMethodName("CategoryController: search() ---------------------------------------------------------------");
+        MyLogger.showMethodName("CategoryController: search() ---------------------------------------------------------- ");
+
 
         // если вместо текста будет пусто или null - вернутся все категории
-        return ResponseEntity.ok(categoryRepository.findByTitle(categorySearchValues.getText()));
+        return ResponseEntity.ok(categoryService.findByTitle(categorySearchValues.getText()));
     }
+
+
 
 
 }
